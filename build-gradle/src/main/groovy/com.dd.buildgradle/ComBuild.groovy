@@ -52,7 +52,7 @@ class ComBuild implements Plugin<Project> {
             // 主工程或者要编译运行的工程
             project.apply plugin: 'com.android.application'
             if (!module.equals(mainmodulename)) {
-                // 飞主工程
+                // 非主工程，但是是当前编译的工程
                 project.android.sourceSets {
                     main {
                         manifest.srcFile 'src/main/runalone/AndroidManifest.xml'
