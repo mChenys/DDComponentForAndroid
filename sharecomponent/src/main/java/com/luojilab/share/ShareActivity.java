@@ -18,6 +18,7 @@ import com.luojilab.router.facade.annotation.RouteNode;
 @RouteNode(path = "/shareBook", desc = "分享书籍页面")
 public class ShareActivity extends BaseActivity {
 
+    // 自动注入参数
     @Autowired
     String bookName;
 
@@ -34,6 +35,7 @@ public class ShareActivity extends BaseActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // 参数注入
         AutowiredService.Factory.getInstance().create().autowire(this);
         setContentView(R.layout.share_activity_share);
 

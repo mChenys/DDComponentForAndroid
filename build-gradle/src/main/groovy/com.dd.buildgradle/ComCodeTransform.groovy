@@ -78,6 +78,7 @@ class ComCodeTransform extends Transform {
                         if (classNameTemp.endsWith(".class")) {
                             String className = classNameTemp.substring(1, classNameTemp.length() - 6)
                             if (className.equals(applicationName)) {
+                                // 开始注入
                                 injectApplicationCode(applications.get(0), activators, fileName)
                             }
                         }
@@ -100,8 +101,13 @@ class ComCodeTransform extends Transform {
         }
     }
 
-
-    private void injectApplicationCode(CtClass ctClassApplication, List<CtClass> activators, String patch) {
+    /**
+     * 向application中注入IApplicationLike的实现
+     * @param ctClassApplication
+     * @param activators
+     * @param fileName
+     */
+    private void injectApplicationCode(CtClass ctClassApplication, List<CtClass> activators, String fileName) {
         System.out.println("injectApplicationCode begin")
         ctClassApplication.defrost()
         try {
@@ -118,7 +124,7 @@ class ComCodeTransform extends Transform {
         } catch (Exception e) {
 
         }
-        ctClassApplication.writeFile(patch)
+        ctClassApplication.writeFile(fileName)
         ctClassApplication.detach()
 
         System.out.println("injectApplicationCode success ")
@@ -127,6 +133,7 @@ class ComCodeTransform extends Transform {
     private String getAutoLoadComCode(List<CtClass> activators) {
         StringBuilder autoLoadComCode = new StringBuilder()
         for (CtClass ctClass : activators) {
+            // 直接调用IApplicationLike实现类的onCreate方法
             autoLoadComCode.append("new " + ctClass.getName() + "()" + ".onCreate();")
         }
 

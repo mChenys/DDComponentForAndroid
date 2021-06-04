@@ -19,24 +19,31 @@ import java.util.List;
  */
 
 public class AutowiredServiceImpl implements AutowiredService {
-
+    // 缓存
     private LruCache<String, ISyringe> classCache = new LruCache<>(50);
     private List<String> blackList = new ArrayList<>();
 
     //attention! make sure this keeps same with the one in AutowiredProcessor
+    // 自动生成类用来注入参数的class的后缀名称
     private static final String SUFFIX_AUTOWIRED = "$$Router$$Autowired";
 
     @Override
     public void autowire(Object instance) {
+        // 目标类名
         String className = instance.getClass().getName();
         try {
+            // 判断是否已经注入过
             if (!blackList.contains(className)) {
+                // 从缓存中获取ISyringe接口实现
                 ISyringe autowiredHelper = classCache.get(className);
                 if (null == autowiredHelper) {  // No cache.
+                    // 获取不到，说明不存在缓存，通过反射创建目标类，例如ShareActivity$$Router$$Autowired
                     autowiredHelper = (ISyringe) Class.forName(instance.getClass().getName() + SUFFIX_AUTOWIRED)
                             .getConstructor().newInstance();
                 }
+                // 开始注入实例对象
                 autowiredHelper.inject(instance);
+                // 保存缓存中
                 classCache.put(className, autowiredHelper);
             } else {
                 // TODO: 2017/12/21 change to specific log system

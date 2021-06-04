@@ -63,7 +63,9 @@ public class ReaderFragment extends Fragment {
         author.setName("Margaret Mitchell");
         author.setCounty("USA");
         Bundle bundle = new Bundle();
+        // 传递字符串
         bundle.putString("bookName", "Gone with the Wind");
+        // 传递json字符串
         bundle.putString("author", JsonService.Factory.getInstance().create().toJsonString(author));
         UIRouter.getInstance().openUri(getActivity(), "DDComp://share/shareBook", bundle);
     }

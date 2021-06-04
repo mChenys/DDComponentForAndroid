@@ -17,6 +17,7 @@ import java.util.List;
  * base on fast-json
  * </p>
  * Created by leobert on 2017/9/18.
+ * 支持json字符串参数的注入
  */
 
 class JsonServiceImpl implements JsonService {

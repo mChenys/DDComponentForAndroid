@@ -27,11 +27,18 @@ public class UriUtils {
         HashMap<String, String> temp = new HashMap<String, String>();
         Set<String> keys = getQueryParameterNames(uri);
         for (String key : keys) {
+            // 通过key取value，并保存到map中
             temp.put(key, uri.getQueryParameter(key));
         }
         return temp;
     }
 
+    /**
+     * 获取key的集合
+     *
+     * @param uri
+     * @return
+     */
     public static Set<String> getQueryParameterNames(Uri uri) {
         String query = uri.getEncodedQuery();
         if (query == null) {
@@ -82,6 +89,12 @@ public class UriUtils {
         }
     }
 
+    /**
+     * 给bundle赋值
+     * @param bundle
+     * @param params 从uri获取的参数map
+     * @param paramsType 从IComponentRouter实现类中获取的参数类型map
+     */
     public static void setBundleValue(Bundle bundle, Map<String, String> params, Map<String, Integer> paramsType) {
         if (paramsType != null && params != null && !paramsType.isEmpty() && !params.isEmpty()) {
             for (Map.Entry<String, Integer> param : paramsType.entrySet()) {
@@ -91,9 +104,10 @@ public class UriUtils {
     }
 
     /**
-     * @param typeDef type
-     * @param key     key
-     * @param value   value
+     * 按字段类型赋值
+     * @param typeDef type 字段类型
+     * @param key     key 字段名
+     * @param value   value 值
      */
     public static void setBundleValue(Bundle bundle, Integer typeDef, String key, String value) {
         if (TextUtils.isEmpty(key) || TextUtils.isEmpty(value)) {

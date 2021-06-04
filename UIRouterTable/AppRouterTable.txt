@@ -5,3 +5,6 @@ HOST : app
 首页
 /main
 
+二级页面
+/second
+

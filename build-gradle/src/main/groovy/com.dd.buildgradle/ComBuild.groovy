@@ -10,17 +10,18 @@ class ComBuild implements Plugin<Project> {
     String compilemodule = "app"
 
     void apply(Project project) {
+        System.out.println("=================================apply start=======================================")
         project.extensions.create('combuild', ComExtension)
 
         String taskNames = project.gradle.startParameter.taskNames.toString()
-        System.out.println("taskNames is " + taskNames)
+        System.out.println("1》》》taskNames is " + taskNames) // 例如：:app:assembleDebug
         String module = project.path.replace(":", "")
-        System.out.println("current module is " + module)
+        System.out.println("2》》》current module is " + module)
         AssembleTask assembleTask = getTaskInfo(project.gradle.startParameter.taskNames)
 
         if (assembleTask.isAssemble) {
             fetchMainModulename(project, assembleTask)
-            System.out.println("compilemodule  is " + compilemodule)
+            System.out.println("3》》》compilemodule  is " + compilemodule)
         }
 
         if (!project.hasProperty("isRunAlone")) {
@@ -31,6 +32,7 @@ class ComBuild implements Plugin<Project> {
         // 但如果是false，则不用修改
         boolean isRunAlone = Boolean.parseBoolean((project.properties.get("isRunAlone")))
         String mainmodulename = project.rootProject.property("mainmodulename")
+        System.out.println("4》》》mainmodulename  is " + mainmodulename) // 例如：app
         if (isRunAlone && assembleTask.isAssemble) {
             //对于要编译的组件和主项目，isRunAlone修改为true，其他组件都强制修改为false
             //这就意味着组件不能引用主项目，这在层级结构里面也是这么规定的
@@ -40,12 +42,17 @@ class ComBuild implements Plugin<Project> {
                 isRunAlone = false
             }
         }
+        // 修改某工程的isRunAlone值
         project.setProperty("isRunAlone", isRunAlone)
+
+        System.out.println("5》》》project is " + project.name + ",isRunAlone:" + isRunAlone)
 
         //根据配置添加各种组件依赖，并且自动化生成组件加载代码
         if (isRunAlone) {
+            // 主工程或者要编译运行的工程
             project.apply plugin: 'com.android.application'
             if (!module.equals(mainmodulename)) {
+                // 飞主工程
                 project.android.sourceSets {
                     main {
                         manifest.srcFile 'src/main/runalone/AndroidManifest.xml'
@@ -58,13 +65,18 @@ class ComBuild implements Plugin<Project> {
             }
             System.out.println("apply plugin is " + 'com.android.application')
             if (assembleTask.isAssemble && module.equals(compilemodule)) {
+                // 添加依赖
                 compileComponents(assembleTask, project)
+                // 添加transfrom
                 project.android.registerTransform(new ComCodeTransform(project))
             }
         } else {
+            // library工程
             project.apply plugin: 'com.android.library'
             System.out.println("apply plugin is " + 'com.android.library')
         }
+
+        System.out.println("=================================apply end=======================================")
 
     }
 
@@ -113,11 +125,12 @@ class ComBuild implements Plugin<Project> {
 
     /**
      * 自动添加依赖，只在运行assemble任务的才会添加依赖，因此在开发期间组件之间是完全感知不到的，这是做到完全隔离的关键
-     * 支持两种语法：module或者groupId:artifactId:version(@aar),前者之间引用module工程，后者使用maven中已经发布的aar
+     * 支持两种语法：module或者groupId:artifactId:version(@aar),前者直接引用module工程，后者使用maven中已经发布的aar
      * @param assembleTask
      * @param project
      */
     private void compileComponents(AssembleTask assembleTask, Project project) {
+        // 读取gradle.properties定义的依赖模块
         String components
         if (assembleTask.isDebug) {
             components = (String) project.properties.get("debugComponent")
@@ -129,13 +142,14 @@ class ComBuild implements Plugin<Project> {
             System.out.println("there is no add dependencies ")
             return
         }
+        // 按，分割
         String[] compileComponents = components.split(",")
         if (compileComponents == null || compileComponents.length == 0) {
             System.out.println("there is no add dependencies ")
             return
         }
         for (String str : compileComponents) {
-            System.out.println("comp is " + str)
+            System.out.println("6》》》${project.name}需要依赖的组件 is " + str)
             if (str.contains(":")) {
                 /**
                  * 示例语法:groupId:artifactId:version(@aar)

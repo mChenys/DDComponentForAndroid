@@ -22,9 +22,12 @@ import java.util.Map;
  */
 
 public class UIRouter implements IUIRouter {
+    // IComponentRouter缓存，避免多次反射创建实例，每个模块只有一个，由编译器自动生成
+    // key=com.luojilab.gen.router.<hostName>UiRouter，value=IComponentRouter接口实现，例如AppUiRouter
     private static Map<String, IComponentRouter> routerInstanceCache = new HashMap<>();
-
+    // 所有IComponentRouter的集合
     private List<IComponentRouter> uiRouters = new ArrayList<>();
+    // 优先级map，key=IComponentRouter，value=优先级
     private HashMap<IComponentRouter, Integer> priorities = new HashMap<>();
 
     private static volatile UIRouter instance;
@@ -43,12 +46,18 @@ public class UIRouter implements IUIRouter {
         return instance;
     }
 
-
+    /**
+     * 组册UIRouter类
+     * @param router
+     * @param priority 优先级
+     */
     @Override
     public void registerUI(IComponentRouter router, int priority) {
         if (priorities.containsKey(router) && priority == priorities.get(router)) {
+            // 已存在优先级map中，不处理
             return;
         }
+        // 移除已存在的IComponentRouter
         removeOldUIRouter(router);
         int i = 0;
         for (IComponentRouter temp : uiRouters) {
@@ -56,9 +65,11 @@ public class UIRouter implements IUIRouter {
             if (tp == null || tp <= priority) {
                 break;
             }
-            i++;
+            i++; // 根据优先级来获取应该存放在uiRouters列表中的index
         }
+        // 保存到列表中
         uiRouters.add(i, router);
+        // 同时保存到优先级map中
         priorities.put(router, priority);
     }
 
@@ -75,6 +86,11 @@ public class UIRouter implements IUIRouter {
         }
     }
 
+    /**
+     * 按优先级注册IComponentRouter
+     * @param host
+     * @param priority
+     */
     @Override
     public void registerUI(String host, int priority) {
         IComponentRouter router = fetch(host);
@@ -94,14 +110,20 @@ public class UIRouter implements IUIRouter {
         }
     }
 
+    /**
+     * 反注册IComponentRouter
+     * @param host
+     */
     @Override
     public void unregisterUI(String host) {
+        // 根据host查找已生成的IComponentRouter实现类
         IComponentRouter router = fetch(host);
         if (router != null) {
             unregisterUI(router);
         }
     }
 
+    //====================页面跳转处理开始==================
     @Override
     public boolean openUri(Context context, String url, Bundle bundle) {
         return openUri(context, url, bundle, 0);
@@ -130,8 +152,10 @@ public class UIRouter implements IUIRouter {
 
     @Override
     public boolean openUri(Context context, Uri uri, Bundle bundle, Integer requestCode) {
+        // 遍历IComponentRouter列表
         for (IComponentRouter temp : uiRouters) {
             try {
+                // 校验uri和跳转，具体要看父类BaseCompRouter
                 if (temp.verifyUri(uri) && temp.openUri(context, uri, bundle, requestCode)) {
                     return true;
                 }
@@ -141,6 +165,7 @@ public class UIRouter implements IUIRouter {
         }
         return false;
     }
+    //====================页面跳转处理结束==================
 
     @Override
     public boolean verifyUri(Uri uri) {
@@ -152,7 +177,10 @@ public class UIRouter implements IUIRouter {
         return false;
     }
 
-
+    /**
+     * 从IComponentRouter列表中移除IComponentRouter
+     * @param router
+     */
     private void removeOldUIRouter(IComponentRouter router) {
         Iterator<IComponentRouter> iterator = uiRouters.iterator();
         while (iterator.hasNext()) {
@@ -164,16 +192,23 @@ public class UIRouter implements IUIRouter {
         }
     }
 
+    /**
+     * 获取IComponentRouter的实现类，是由编译器自动生成的，命名格式：HostnameUiRouter
+     * @param host
+     * @return
+     */
     private IComponentRouter fetch(@NonNull String host) {
 
         String path = RouteUtils.genHostUIRouterClass(host);
 
         if (routerInstanceCache.containsKey(path))
-            return routerInstanceCache.get(path);
+            return routerInstanceCache.get(path); // 缓存有
 
         try {
+            // 缓存无，通过反射创建
             Class cla = Class.forName(path);
             IComponentRouter instance = (IComponentRouter) cla.newInstance();
+            // 保存缓存
             routerInstanceCache.put(path, instance);
             return instance;
         } catch (ClassNotFoundException e) {
