@@ -1,0 +1,219 @@
+DDComponentForAndroid路由框架分析
+
+App ->主工程
+	| router-annotation
+	| componentservice ->提供服务，例如ReadBookService
+		| basicres ->BaseApplication/BaseActivity
+			| basiclib -> ToastManager
+				| componentlib—>com.luojilab.component.componentlib(核心库）
+					包含：IApplicationLike、Router、UIRouter等等。
+
+App/build.gradle:
+	apply plugin: 'com.dd.comgradle'
+		android {
+  		 	…
+
+    		    javaCompileOptions {
+      			      annotationProcessorOptions {
+       			         arguments = [host: "app"] // 组件名称
+       			     }
+       		  }
+
+    	}
+   	…
+	combuild {
+	    applicationName = 'com.luojilab.componentdemo.application.AppApplication'
+	    isRegisterCompoAuto = true // 自动注册
+	}
+
+gradle.properties:
+	isRunAlone=true
+	debugComponent=readercomponent,sharecomponent,sharecomponentkotlin
+	compileComponent=readercomponent,sharecomponent,sharecomponentkotlin
+
+AppApplication：
+	public class AppApplication extends BaseApplication {
+
+  	  @Override
+	    public void onCreate() {
+	        super.onCreate();
+		// 由于主工程没有定义IApplicationLike的实现，所以注册UI可以写在AppApplication内
+	        UIRouter.getInstance().registerUI("app");
+
+ 	       //如果isRegisterCompoAuto为false，则需要通过反射加载组件
+	//        Router.registerComponent("com.luojilab.reader.applike.ReaderAppLike");
+	//        Router.registerComponent("com.luojilab.share.applike.ShareApplike");
+	    }
+
+
+	}
+
+=========================================================================
+
+readercomponent
+	| componentservice
+	| router-anno-compiler
+	
+
+readercomponent/build.gradle:
+	apply plugin: 'com.dd.comgradle'
+	android {
+		javaCompileOptions {
+   			 annotationProcessorOptions {
+    			    arguments = [host: "reader"]
+   		 }
+	}
+
+	}
+	combuild {
+   		 applicationName = 'com.luojilab.reader.runalone.application.ReaderApplication'
+    		isRegisterCompoAuto = false // 手动注册
+	}
+
+
+gradle.properties:
+	isRunAlone=true
+	// 需要关联的组件：
+	debugComponent=sharecomponent,sharecomponentkotlin
+	compileComponent=sharecomponent,sharecomponentkotlin
+
+ReaderApplication：
+	public class ReaderApplication extends BaseApplication {
+
+   	 @Override
+ 	   public void onCreate() {
+  	      super.onCreate();
+
+ 	       //如果isRegisterCompoAuto为false，则需要通过反射加载组件
+	        Router.registerComponent("com.luojilab.share.applike.ShareApplike"); // 加载其他模块的applike
+	        Router.registerComponent("com.luojilab.share.kotlin.applike.KotlinApplike");
+	    }
+
+	}
+
+ReaderAppLike:
+	public class ReaderAppLike implements IApplicationLike {
+
+ 	   Router router = Router.getInstance();
+ 	   UIRouter uiRouter = UIRouter.getInstance();
+
+ 	   @Override
+ 	   public void onCreate() {
+     		   uiRouter.registerUI("reader"); //注册UI
+		   // 注册服务
+	       	   router.addService(ReadBookService.class.getSimpleName(), new ReadBookServiceImplKotlin());
+   	 }
+
+  	  @Override
+  	  public void onStop() {
+		// 反注册
+  	      uiRouter.unregisterUI("reader");
+  	      router.removeService(ReadBookService.class.getSimpleName());
+ 	   }
+	}
+
+=========================================================================
+
+sharecomponent
+	｜componentservice
+	｜router-anno-compiler
+
+sharecomponent/build.gradle:
+
+	apply plugin: 'com.dd.comgradle'
+	javaCompileOptions {
+    		annotationProcessorOptions {
+     			   arguments = [host: "share"]
+   			 }
+		}
+
+	combuild {
+   		 applicationName = 'com.luojilab.share.runalone.application.ShareApplication'
+ 		 isRegisterCompoAuto = true // 自动组册
+	}
+
+gradle.properties:
+	isRunAlone=true
+	// 无需依赖其他模块
+
+ShareApplication：
+	public class ShareApplication extends BaseApplication {
+
+	    @Override
+	    public void onCreate() {
+	        super.onCreate();
+		// 无需加载组件
+	    }
+
+	}
+
+ShareApplike：
+	
+	public class ShareApplike implements IApplicationLike {
+
+	    UIRouter uiRouter = UIRouter.getInstance();
+
+	    @Override
+	    public void onCreate() {
+		// 仅注册UI
+	        uiRouter.registerUI("share");
+	    }
+
+	    @Override
+	    public void onStop() {
+	        uiRouter.unregisterUI("share");
+	    }
+	}
+
+=========================================================================
+
+sharecomponentkotlin
+	｜componentservice
+	｜router-anno-compiler
+	
+sharecomponentkotlin/build.gradle:
+
+	apply plugin: 'com.dd.comgradle'
+	kapt {
+   		 arguments {
+    		    arg("host", "kotlin")
+  	 	 }
+	}
+
+	combuild {
+  		  applicationName = 'com.luojilab.share.runalone.application.KotlinApplication'
+  		  isRegisterCompoAuto = true // 自动注册
+	}
+
+gradle.properties:
+	isRunAlone=true
+	// 无需依赖其他模块
+
+KotlinApplication	：
+	class KotlinApplication : BaseApplication() {
+
+    		override fun onCreate() {
+   		     super.onCreate()
+  		  }
+
+	}
+
+KotlinApplike：
+	class KotlinApplike : IApplicationLike {
+
+   		 val uiRouter = UIRouter.getInstance()
+
+  		  override fun onCreate() {
+  		      uiRouter.registerUI("kotlin") // 注册UI
+ 		   }
+	
+ 		   override fun onStop() {
+ 		       uiRouter.unregisterUI("kotlin")
+ 		   }
+	}
+
+=========================================================================
+总结：
+1. 在X x xApplication中调用Router.registerComponent(“IApplicationLike实现类”)的目的是激活对应模块的IApplicationLike实现类的onCreate方法
+2. IApplicationLike实现类的onCreate方法中通过UIRouter.registerUI(“Hostname”)的目的是为了保存IComponentRouter的实现类，该实现类是通过注解处理器生成的。当进行路由跳转的时候可以从缓存中遍历符合要求的实现来进行跳转
+3. IApplicationLike实现类的onCreate方法中通过Router.addService(服务接口的className, 具体的服务实现类对象);的目是保存服务的具体实现，当其他组件需要用到此服务的时候就可以通过Router的getService方法传入服务的接口className就可以得到具体的服务实现了，通常服务接口类会定义在公共库中，例如demo中的componentservice库，这样所有的模块依赖它都可以引用到服务的接口类，通过接口类名获取具体的服务实现得到访问具体的功能。
