@@ -18,6 +18,7 @@ import java.util.Map;
 public abstract class BaseCompRouter implements IComponentRouter {
     // key=路径名，例如：/main， value=Class，例如：MainActivity.class
     protected Map<String, Class> routeMapper = new HashMap<String, Class>();
+
     // 参数类map，key=Class，例如：MainActivity.class，value=Map<字段名, 字段类型>
     protected Map<Class, Map<String, Integer>> paramsMapper = new HashMap<>();
 

@@ -18,9 +18,10 @@ import java.util.List;
  * Created by leobert on 2017/9/18.
  */
 
-public class AutowiredServiceImpl implements AutowiredService {
+public class  AutowiredServiceImpl implements AutowiredService {
     // 缓存
     private LruCache<String, ISyringe> classCache = new LruCache<>(50);
+    // 黑名单集合，用来存储注入失败的className
     private List<String> blackList = new ArrayList<>();
 
     //attention! make sure this keeps same with the one in AutowiredProcessor

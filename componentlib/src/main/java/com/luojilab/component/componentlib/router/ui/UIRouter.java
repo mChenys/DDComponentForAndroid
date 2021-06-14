@@ -80,6 +80,7 @@ public class UIRouter implements IUIRouter {
 
     @Override
     public void registerUI(String host) {
+        // 通过模块的hostName查找注解处理器自动生成的IComponentRouter的实现类
         IComponentRouter router = fetch(host);
         if (router != null) {
             registerUI(router, PRIORITY_NORMAL);
@@ -199,6 +200,7 @@ public class UIRouter implements IUIRouter {
      */
     private IComponentRouter fetch(@NonNull String host) {
 
+        // path=com.luojilab.gen.router.<HostName>UiRouter
         String path = RouteUtils.genHostUIRouterClass(host);
 
         if (routerInstanceCache.containsKey(path))
