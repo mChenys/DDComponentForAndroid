@@ -113,7 +113,7 @@ class ComCodeTransform extends Transform {
         try {
             CtMethod attachBaseContextMethod = ctClassApplication.getDeclaredMethod("onCreate", null)
             attachBaseContextMethod.insertAfter(getAutoLoadComCode(activators))
-        } catch (CannotCompileException | NotFoundException e) {
+        } catch (Exception e) {
             StringBuilder methodBody = new StringBuilder()
             methodBody.append("protected void onCreate() {")
             methodBody.append("super.onCreate();")
@@ -121,8 +121,6 @@ class ComCodeTransform extends Transform {
                     append(getAutoLoadComCode(activators))
             methodBody.append("}")
             ctClassApplication.addMethod(CtMethod.make(methodBody.toString(), ctClassApplication))
-        } catch (Exception e) {
-
         }
         ctClassApplication.writeFile(fileName)
         ctClassApplication.detach()

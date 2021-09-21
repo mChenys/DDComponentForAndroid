@@ -3,18 +3,22 @@
 buildscript {
     ext.kotlin_version = '1.3.20'
     repositories {
-        jcenter()
+        google()
+        mavenCentral()
+        maven {
+            url uri('ddPlugin') //build-gradle 所在的仓库，这里是本地目录(相对当前 build.gradle 的路径)
+        }
         maven { url "https://jitpack.io" }
         maven {
             url 'https://maven.google.com/'
             name 'Google'
         }
-        mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.1'
-        classpath 'com.luojilab.ddcomponent:build-gradle:1.1.0'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.2'
+        classpath 'com.android.tools.build:gradle:4.2.0'
+        classpath 'com.dd.buildgradle:dd-plugin:1.2.1' // 使用本地仓库的插件，下面那个远程的仓库无效了
+        //classpath 'com.luojilab.ddcomponent:build-gradle:1.1.0'
+//        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.2'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
@@ -22,12 +26,12 @@ buildscript {
 
 allprojects {
     repositories {
-        jcenter()
+        google()
+        mavenCentral()
         maven { url "https://jitpack.io" }
         maven {
             url 'https://maven.google.com/'
             name 'Google'
         }
-        mavenCentral()
     }
 }

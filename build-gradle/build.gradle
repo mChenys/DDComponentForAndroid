@@ -1,6 +1,20 @@
 apply plugin: 'groovy'
-//apply plugin:'maven-publish'
-//apply plugin:'maven'
+apply plugin: 'maven'
+apply plugin:'maven-publish'
+apply plugin: 'java-library'
+
+dependencies {
+    implementation gradleApi()//gradle sdk
+    implementation localGroovy() //groovy sdk
+    // 必要依赖,因为Transform需要用到改库里面的
+    implementation 'com.android.tools.build:gradle:4.2.0'
+    implementation group: 'org.javassist', name: 'javassist', version: '3.20.0-GA'
+}
+
+repositories {
+    mavenCentral()
+}
+
 
 ext {
     bintrayName = 'build-gradle'
@@ -12,27 +26,16 @@ ext {
     licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
     allLicenses = ["Apache-2.0"]
 }
-apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
-apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'
+//apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
+//apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'
 
-repositories {
-    jcenter()
+
+
+uploadArchives {
+    repositories.mavenDeployer {
+        repository(url: uri('../repo'))
+        pom.groupId = 'com.dev.local'
+        pom.artifactId = 'gradleplugin'//名字随便取
+        pom.version = '1.0.0'
+    }
 }
-
-dependencies {
-    compile 'com.android.tools.build:gradle:2.3.2'
-    compile group: 'org.javassist', name: 'javassist', version: '3.20.0-GA'
-    //gradle sdk
-    compile gradleApi()
-    //groovy sdk
-    compile localGroovy()
-}
-
-//uploadArchives {
-//    repositories.mavenDeployer {
-//        repository(url: uri('../repo'))
-//        pom.groupId = 'com.dev.local'
-//        pom.artifactId = 'gradleplugin'//名字随便取
-//        pom.version = '1.0.0'
-//    }
-//}
